@@ -34,13 +34,13 @@ import io.mycat.net2.mysql.packet.util.BufferUtil;
 
 /**
  * From server to client. One packet for each row in the result set.
- * 
+ * <p>
  * <pre>
  * Bytes                   Name
  * -----                   ----
  * n (Length Coded String) (column value)
  * ...
- * 
+ *
  * (column value):         The data in the column, as a character string.
  *                         If a column is defined as non-character, the
  *                         server converts the value into a character
@@ -48,10 +48,10 @@ import io.mycat.net2.mysql.packet.util.BufferUtil;
  *                         Coded String, a NULL can be represented with a
  *                         single byte containing 251(see the description
  *                         of Length Coded Strings in section "Elements" above).
- * 
+ *
  * &#64;see http://forge.mysql.com/wiki/MySQL_Internals_ClientServer_Protocol#Row_Data_Packet
  * </pre>
- * 
+ *
  * @author mycat
  */
 public class RowDataPacket extends MySQLPacket {

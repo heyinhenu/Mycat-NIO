@@ -26,7 +26,8 @@ import io.mycat.net2.mysql.packet.util.CommonPacketUtil;
 import io.mycat.net2.mysql.parser.ServerParse;
 
 public class MySQLFrontConnectionHandler implements NIOHandler<MySQLFrontendConnection> {
-    private static final byte[] AUTH_OK = new byte[] { 7, 0, 0, 2, 0, 0, 0, 2, 0, 0, 0 };
+
+    private static final byte[] AUTH_OK = new byte[]{7, 0, 0, 2, 0, 0, 0, 2, 0, 0, 0};
     private static final Logger LOGGER = LoggerFactory.getLogger(MySQLFrontConnectionHandler.class);
 
     @Override
@@ -52,18 +53,18 @@ public class MySQLFrontConnectionHandler implements NIOHandler<MySQLFrontendConn
         int connectedStatus = con.getConnectedStatus();
         int packetIndex = bufferArray.getCurPacageIndex() - 1;
         switch (connectedStatus) {
-        case MySQLFrontendConnection.LOGIN_STATUS:
-            LOGGER.debug("Handle Login msg");
-            doLogin(con, bufferArray, packetIndex);
-            break;
-        case MySQLFrontendConnection.CMD_RECIEVED_STATUS:
-            LOGGER.debug("Handle Query msg");
-            doQuery(con, bufferArray, packetIndex);
-            break;
-        case MySQLFrontendConnection.QUIT_STATUS:
-            LOGGER.info("Client quit.");
-            con.close("quit packet");
-            break;
+            case MySQLFrontendConnection.LOGIN_STATUS:
+                LOGGER.debug("Handle Login msg");
+                doLogin(con, bufferArray, packetIndex);
+                break;
+            case MySQLFrontendConnection.CMD_RECIEVED_STATUS:
+                LOGGER.debug("Handle Query msg");
+                doQuery(con, bufferArray, packetIndex);
+                break;
+            case MySQLFrontendConnection.QUIT_STATUS:
+                LOGGER.info("Client quit.");
+                con.close("quit packet");
+                break;
         }
     }
 
@@ -95,57 +96,57 @@ public class MySQLFrontConnectionHandler implements NIOHandler<MySQLFrontendConn
         // }
 
         switch (sqlType) {
-        case ServerParse.EXPLAIN:
-            LOGGER.debug("EXPLAIN");
-            break;
-        case ServerParse.SET:
-            LOGGER.debug("SET");
-            break;
-        case ServerParse.SHOW:
-            LOGGER.debug("SHOW");
-            break;
-        case ServerParse.SELECT:
-            LOGGER.debug("SELECT");
-            // SelectHandler.handle(sql, con, rs >>> 8);
-            break;
-        case ServerParse.START:
-            LOGGER.debug("START");
-            break;
-        case ServerParse.BEGIN:
-            LOGGER.debug("BEGIN");
-            break;
-        case ServerParse.SAVEPOINT:
-            LOGGER.debug("SAVEPOINT");
-            break;
-        case ServerParse.KILL:
-            LOGGER.debug("KILL");
-            break;
-        case ServerParse.KILL_QUERY:
-            LOGGER.debug("KILL_QUERY");
-            break;
-        case ServerParse.USE:
-            LOGGER.debug("USE");
-            break;
-        case ServerParse.COMMIT:
-            LOGGER.debug("COMMIT");
-            break;
-        case ServerParse.ROLLBACK:
-            LOGGER.debug("ROLLBACK");
-            break;
-        case ServerParse.HELP:
-            LOGGER.debug("HELP");
-            break;
-        case ServerParse.MYSQL_CMD_COMMENT:
-            LOGGER.debug("MYSQL_CMD_COMMENT");
-            break;
-        case ServerParse.MYSQL_COMMENT:
-            LOGGER.debug("MYSQL_COMMENT");
-            break;
-        case ServerParse.LOAD_DATA_INFILE_SQL:
-            LOGGER.debug("LOAD_DATA_INFILE_SQL");
-            break;
-        default:
-            LOGGER.debug("DEFAULT");
+            case ServerParse.EXPLAIN:
+                LOGGER.debug("EXPLAIN");
+                break;
+            case ServerParse.SET:
+                LOGGER.debug("SET");
+                break;
+            case ServerParse.SHOW:
+                LOGGER.debug("SHOW");
+                break;
+            case ServerParse.SELECT:
+                LOGGER.debug("SELECT");
+                // SelectHandler.handle(sql, con, rs >>> 8);
+                break;
+            case ServerParse.START:
+                LOGGER.debug("START");
+                break;
+            case ServerParse.BEGIN:
+                LOGGER.debug("BEGIN");
+                break;
+            case ServerParse.SAVEPOINT:
+                LOGGER.debug("SAVEPOINT");
+                break;
+            case ServerParse.KILL:
+                LOGGER.debug("KILL");
+                break;
+            case ServerParse.KILL_QUERY:
+                LOGGER.debug("KILL_QUERY");
+                break;
+            case ServerParse.USE:
+                LOGGER.debug("USE");
+                break;
+            case ServerParse.COMMIT:
+                LOGGER.debug("COMMIT");
+                break;
+            case ServerParse.ROLLBACK:
+                LOGGER.debug("ROLLBACK");
+                break;
+            case ServerParse.HELP:
+                LOGGER.debug("HELP");
+                break;
+            case ServerParse.MYSQL_CMD_COMMENT:
+                LOGGER.debug("MYSQL_CMD_COMMENT");
+                break;
+            case ServerParse.MYSQL_COMMENT:
+                LOGGER.debug("MYSQL_COMMENT");
+                break;
+            case ServerParse.LOAD_DATA_INFILE_SQL:
+                LOGGER.debug("LOAD_DATA_INFILE_SQL");
+                break;
+            default:
+                LOGGER.debug("DEFAULT");
         }
         if (sql.equals("select @@version_comment limit 1")) {
             SelectHandler.handle(sql, con, rs >>> 8);
@@ -153,8 +154,7 @@ public class MySQLFrontConnectionHandler implements NIOHandler<MySQLFrontendConn
         }
         // TODO MOCK
         try {
-            BackendConnection backCon = MockMySQLServer.mockDBNodes.get(MockMySQLServer.MOCK_HOSTNAME)
-                    .getConnection(MockMySQLServer.MOCK_SCHEMA, true, null);
+            BackendConnection backCon = MockMySQLServer.mockDBNodes.get(MockMySQLServer.MOCK_HOSTNAME).getConnection(MockMySQLServer.MOCK_SCHEMA, true, null);
             backCon.setResponseHandler(new ResponseHandler() {
 
                 private ByteBufferArray newBufferArray;
@@ -256,7 +256,6 @@ public class MySQLFrontConnectionHandler implements NIOHandler<MySQLFrontendConn
         // con.setUser(auth.user);
         // con.setSchema(auth.database);
         // con.setCharsetIndex(auth.charsetIndex);
-
         con.write(AUTH_OK);
         con.setState(Connection.State.connected);
         con.setConnectedStatus(MySQLFrontendConnection.IDLE_STATUS);

@@ -28,160 +28,160 @@ import java.io.IOException;
 
 /**
  * 系统基础配置项
- * 
+ *
  * @author mycat
  */
 public final class SystemConfig {
-	public static  String SYS_HOME = "MYCAT_HOME";
-	public static final int DEFAULT_PROCESSORS = Runtime.getRuntime().availableProcessors();
-	private int frontSocketSoRcvbuf = 1024 * 1024;
-	private int frontSocketSoSndbuf = 4 * 1024 * 1024;
-	private int backSocketSoRcvbuf = 4 * 1024 * 1024;// mysql 5.6
-														// net_buffer_length
-														// defaut 4M
-	private int backSocketSoSndbuf = 1024 * 1024;
-	private int frontSocketNoDelay = 1; // 0=false
-	private int backSocketNoDelay = 1; // 1=true
+    public static String SYS_HOME = "MYCAT_HOME";
+    public static final int DEFAULT_PROCESSORS = Runtime.getRuntime().availableProcessors();
+    private int frontSocketSoRcvbuf = 1024 * 1024;
+    private int frontSocketSoSndbuf = 4 * 1024 * 1024;
+    private int backSocketSoRcvbuf = 4 * 1024 * 1024;// mysql 5.6
+    // net_buffer_length
+    // defaut 4M
+    private int backSocketSoSndbuf = 1024 * 1024;
+    private int frontSocketNoDelay = 1; // 0=false
+    private int backSocketNoDelay = 1; // 1=true
 
-	private long processorBufferPool;
-	private int processorBufferChunk;
+    private long processorBufferPool;
+    private int processorBufferChunk;
 
-	private int packetHeaderSize = 4;
-	private int maxPacketSize = 16 * 1024 * 1024;
+    private int packetHeaderSize = 4;
+    private int maxPacketSize = 16 * 1024 * 1024;
 
-	public SystemConfig() {
+    public SystemConfig() {
 
-	}
+    }
 
-	public int getPacketHeaderSize() {
-		return packetHeaderSize;
-	}
+    public int getPacketHeaderSize() {
+        return packetHeaderSize;
+    }
 
-	public void setPacketHeaderSize(int packetHeaderSize) {
-		this.packetHeaderSize = packetHeaderSize;
-	}
+    public void setPacketHeaderSize(int packetHeaderSize) {
+        this.packetHeaderSize = packetHeaderSize;
+    }
 
-	public int getMaxPacketSize() {
-		return maxPacketSize;
-	}
+    public int getMaxPacketSize() {
+        return maxPacketSize;
+    }
 
-	public void setMaxPacketSize(int maxPacketSize) {
-		this.maxPacketSize = maxPacketSize;
-	}
+    public void setMaxPacketSize(int maxPacketSize) {
+        this.maxPacketSize = maxPacketSize;
+    }
 
-	public static String getHomePath() {
-		String home = System.getProperty(SystemConfig.SYS_HOME);
-		if (home != null) {
-			if (home.endsWith(File.pathSeparator)) {
-				home = home.substring(0, home.length() - 1);
-				System.setProperty(SystemConfig.SYS_HOME, home);
-			}
-		}
+    public static String getHomePath() {
+        String home = System.getProperty(SystemConfig.SYS_HOME);
+        if (home != null) {
+            if (home.endsWith(File.pathSeparator)) {
+                home = home.substring(0, home.length() - 1);
+                System.setProperty(SystemConfig.SYS_HOME, home);
+            }
+        }
 
-		// MYCAT_HOME为空，默认尝试设置为当前目录或上级目录。BEN
-		if (home == null) {
-			try {
-				String path = new File("..").getCanonicalPath().replaceAll("\\\\", "/");
-				File conf = new File(path + "/conf");
-				if (conf.exists() && conf.isDirectory()) {
-					home = path;
-				} else {
-					path = new File(".").getCanonicalPath().replaceAll("\\\\", "/");
-					conf = new File(path + "/conf");
-					if (conf.exists() && conf.isDirectory()) {
-						home = path;
-					}
-				}
+        // MYCAT_HOME为空，默认尝试设置为当前目录或上级目录。BEN
+        if (home == null) {
+            try {
+                String path = new File("..").getCanonicalPath().replaceAll("\\\\", "/");
+                File conf = new File(path + "/conf");
+                if (conf.exists() && conf.isDirectory()) {
+                    home = path;
+                } else {
+                    path = new File(".").getCanonicalPath().replaceAll("\\\\", "/");
+                    conf = new File(path + "/conf");
+                    if (conf.exists() && conf.isDirectory()) {
+                        home = path;
+                    }
+                }
 
-				if (home != null) {
-					System.setProperty(SystemConfig.SYS_HOME, home);
-				}
-			} catch (IOException e) {
-				// 如出错，则忽略。
-			}
-		}
+                if (home != null) {
+                    System.setProperty(SystemConfig.SYS_HOME, home);
+                }
+            } catch (IOException e) {
+                // 如出错，则忽略。
+            }
+        }
 
-		return home;
-	}
+        return home;
+    }
 
-	public int getFrontsocketsorcvbuf() {
-		return frontSocketSoRcvbuf;
-	}
+    public int getFrontsocketsorcvbuf() {
+        return frontSocketSoRcvbuf;
+    }
 
-	public int getFrontsocketsosndbuf() {
-		return frontSocketSoSndbuf;
-	}
+    public int getFrontsocketsosndbuf() {
+        return frontSocketSoSndbuf;
+    }
 
-	public int getBacksocketsorcvbuf() {
-		return backSocketSoRcvbuf;
-	}
+    public int getBacksocketsorcvbuf() {
+        return backSocketSoRcvbuf;
+    }
 
-	public int getBacksocketsosndbuf() {
-		return backSocketSoSndbuf;
-	}
+    public int getBacksocketsosndbuf() {
+        return backSocketSoSndbuf;
+    }
 
-	public long getProcessorBufferPool() {
-		return processorBufferPool;
-	}
+    public long getProcessorBufferPool() {
+        return processorBufferPool;
+    }
 
-	public void setProcessorBufferPool(long processorBufferPool) {
-		this.processorBufferPool = processorBufferPool;
-	}
+    public void setProcessorBufferPool(long processorBufferPool) {
+        this.processorBufferPool = processorBufferPool;
+    }
 
-	public int getProcessorBufferChunk() {
-		return processorBufferChunk;
-	}
+    public int getProcessorBufferChunk() {
+        return processorBufferChunk;
+    }
 
-	public void setProcessorBufferChunk(int processorBufferChunk) {
-		this.processorBufferChunk = processorBufferChunk;
-	}
+    public void setProcessorBufferChunk(int processorBufferChunk) {
+        this.processorBufferChunk = processorBufferChunk;
+    }
 
-	public int getFrontSocketSoRcvbuf() {
-		return frontSocketSoRcvbuf;
-	}
+    public int getFrontSocketSoRcvbuf() {
+        return frontSocketSoRcvbuf;
+    }
 
-	public void setFrontSocketSoRcvbuf(int frontSocketSoRcvbuf) {
-		this.frontSocketSoRcvbuf = frontSocketSoRcvbuf;
-	}
+    public void setFrontSocketSoRcvbuf(int frontSocketSoRcvbuf) {
+        this.frontSocketSoRcvbuf = frontSocketSoRcvbuf;
+    }
 
-	public int getFrontSocketSoSndbuf() {
-		return frontSocketSoSndbuf;
-	}
+    public int getFrontSocketSoSndbuf() {
+        return frontSocketSoSndbuf;
+    }
 
-	public void setFrontSocketSoSndbuf(int frontSocketSoSndbuf) {
-		this.frontSocketSoSndbuf = frontSocketSoSndbuf;
-	}
+    public void setFrontSocketSoSndbuf(int frontSocketSoSndbuf) {
+        this.frontSocketSoSndbuf = frontSocketSoSndbuf;
+    }
 
-	public int getBackSocketSoRcvbuf() {
-		return backSocketSoRcvbuf;
-	}
+    public int getBackSocketSoRcvbuf() {
+        return backSocketSoRcvbuf;
+    }
 
-	public void setBackSocketSoRcvbuf(int backSocketSoRcvbuf) {
-		this.backSocketSoRcvbuf = backSocketSoRcvbuf;
-	}
+    public void setBackSocketSoRcvbuf(int backSocketSoRcvbuf) {
+        this.backSocketSoRcvbuf = backSocketSoRcvbuf;
+    }
 
-	public int getBackSocketSoSndbuf() {
-		return backSocketSoSndbuf;
-	}
+    public int getBackSocketSoSndbuf() {
+        return backSocketSoSndbuf;
+    }
 
-	public void setBackSocketSoSndbuf(int backSocketSoSndbuf) {
-		this.backSocketSoSndbuf = backSocketSoSndbuf;
-	}
+    public void setBackSocketSoSndbuf(int backSocketSoSndbuf) {
+        this.backSocketSoSndbuf = backSocketSoSndbuf;
+    }
 
-	public int getFrontSocketNoDelay() {
-		return frontSocketNoDelay;
-	}
+    public int getFrontSocketNoDelay() {
+        return frontSocketNoDelay;
+    }
 
-	public void setFrontSocketNoDelay(int frontSocketNoDelay) {
-		this.frontSocketNoDelay = frontSocketNoDelay;
-	}
+    public void setFrontSocketNoDelay(int frontSocketNoDelay) {
+        this.frontSocketNoDelay = frontSocketNoDelay;
+    }
 
-	public int getBackSocketNoDelay() {
-		return backSocketNoDelay;
-	}
+    public int getBackSocketNoDelay() {
+        return backSocketNoDelay;
+    }
 
-	public void setBackSocketNoDelay(int backSocketNoDelay) {
-		this.backSocketNoDelay = backSocketNoDelay;
-	}
+    public void setBackSocketNoDelay(int backSocketNoDelay) {
+        this.backSocketNoDelay = backSocketNoDelay;
+    }
 
 }

@@ -39,24 +39,24 @@ public class MySQLBackendConnectionHandler implements NIOHandler<MySQLBackendCon
         int connectedStatus = con.getConnectedStatus();
         int packetIndex = bufferArray.getCurPacageIndex() - 1;
         switch (con.getState()) {
-        case connecting: {
-            LOGGER.debug("backend handle login", con);
-            doConnecting(con, bufferArray, packetIndex);
-            break;
-        }
-        case connected: {
-            try {
-                LOGGER.debug("backend handle business", con);
-                doHandleBusinessMsg(con, bufferArray, packetIndex);
-            } catch (Exception e) {
-                LOGGER.warn("caught err of con " + con, e);
+            case connecting: {
+                LOGGER.debug("backend handle login", con);
+                doConnecting(con, bufferArray, packetIndex);
+                break;
             }
-            break;
-        }
+            case connected: {
+                try {
+                    LOGGER.debug("backend handle business", con);
+                    doHandleBusinessMsg(con, bufferArray, packetIndex);
+                } catch (Exception e) {
+                    LOGGER.warn("caught err of con " + con, e);
+                }
+                break;
+            }
 
-        default:
-            LOGGER.warn("not handled connecton state  err " + con.getState() + " for con " + con);
-            break;
+            default:
+                LOGGER.warn("not handled connecton state  err " + con.getState() + " for con " + con);
+                break;
 
         }
         bufferArray.setCurHandlingPacageIndex(bufferArray.getCurPacageIndex());
@@ -71,52 +71,52 @@ public class MySQLBackendConnectionHandler implements NIOHandler<MySQLBackendCon
     private void handleLogin(MySQLBackendConnection source, ByteBufferArray bufferArray, int packetIndex) {
         try {
             switch (bufferArray.readPacket(packetIndex, 4)) {
-            case OkPacket.FIELD_COUNT:
-                HandshakePacket packet = source.getHandshake();
-                if (packet == null) {
-                    processHandShakePacket(source, bufferArray, packetIndex);
-                    // 发送认证数据包
-                    source.authenticate();
+                case OkPacket.FIELD_COUNT:
+                    HandshakePacket packet = source.getHandshake();
+                    if (packet == null) {
+                        processHandShakePacket(source, bufferArray, packetIndex);
+                        // 发送认证数据包
+                        source.authenticate();
+                        break;
+                    }
+                    // 处理认证结果
+                    source.setAuthenticated(true);
+                    source.setConnectedStatus(MySQLBackendConnection.IDLE_STATUS);
+                    source.setState(Connection.State.connected);
+                    boolean clientCompress = Capabilities.CLIENT_COMPRESS == (Capabilities.CLIENT_COMPRESS
+                            & packet.serverCapabilities);
+                    boolean usingCompress = false;
+
+                    if (clientCompress && usingCompress) {
+                        // source.setSupportCompress(true);
+                    }
+
+                    // if (source.getRespHandler() != null) {
+                    // source.getRespHandler().connectionAcquired(source);
+                    // }
+
                     break;
-                }
-                // 处理认证结果
-                source.setAuthenticated(true);
-                source.setConnectedStatus(MySQLBackendConnection.IDLE_STATUS);
-                source.setState(Connection.State.connected);
-                boolean clientCompress = Capabilities.CLIENT_COMPRESS == (Capabilities.CLIENT_COMPRESS
-                        & packet.serverCapabilities);
-                boolean usingCompress = false;
+                case ErrorPacket.FIELD_COUNT:
+                    ErrorPacket err = new ErrorPacket();
+                    err.read(bufferArray, packetIndex);
+                    String errMsg = new String(err.message);
+                    LOGGER.warn("can't connect to mysql server ,errmsg:" + errMsg + " " + source);
+                    // source.close(errMsg);
+                    throw new ConnectionException(err.errno, errMsg);
 
-                if (clientCompress && usingCompress) {
-                    // source.setSupportCompress(true);
-                }
-
-                // if (source.getRespHandler() != null) {
-                // source.getRespHandler().connectionAcquired(source);
-                // }
-
-                break;
-            case ErrorPacket.FIELD_COUNT:
-                ErrorPacket err = new ErrorPacket();
-                err.read(bufferArray, packetIndex);
-                String errMsg = new String(err.message);
-                LOGGER.warn("can't connect to mysql server ,errmsg:" + errMsg + " " + source);
-                // source.close(errMsg);
-                throw new ConnectionException(err.errno, errMsg);
-
-            case EOFPacket.FIELD_COUNT:
-                auth323(source, bufferArray.readPacket(packetIndex, 3));
-                break;
-            default:
-                packet = source.getHandshake();
-                if (packet == null) {
-                    processHandShakePacket(source, bufferArray, packetIndex);
-                    // 发送认证数据包
-                    source.authenticate();
+                case EOFPacket.FIELD_COUNT:
+                    auth323(source, bufferArray.readPacket(packetIndex, 3));
                     break;
-                } else {
-                    throw new RuntimeException("Unknown Packet!");
-                }
+                default:
+                    packet = source.getHandshake();
+                    if (packet == null) {
+                        processHandShakePacket(source, bufferArray, packetIndex);
+                        // 发送认证数据包
+                        source.authenticate();
+                        break;
+                    } else {
+                        throw new RuntimeException("Unknown Packet!");
+                    }
 
             }
 
@@ -134,8 +134,7 @@ public class MySQLBackendConnectionHandler implements NIOHandler<MySQLBackendCon
         handleLogin(con, bufferArray, packetIndex);
     }
 
-    public void doHandleBusinessMsg(final MySQLBackendConnection source, final ByteBufferArray bufferArray,
-            final int packetIndex) {
+    public void doHandleBusinessMsg(final MySQLBackendConnection source, final ByteBufferArray bufferArray, final int packetIndex) {
         handleData(source, bufferArray, packetIndex);
     }
 
@@ -143,22 +142,18 @@ public class MySQLBackendConnectionHandler implements NIOHandler<MySQLBackendCon
 
     }
 
-    protected void handleData(final MySQLBackendConnection source, final ByteBufferArray bufferArray,
-            final int packetIndex) {
+    protected void handleData(final MySQLBackendConnection source, final ByteBufferArray bufferArray, final int packetIndex) {
         LOGGER.debug("handle data business.");
         int lastPacketIndex = bufferArray.getCurPacageIndex() - 1;
         // TODO MOCK
         source.getResponseHandler().handleResponse(bufferArray, source);
-
         byte type = bufferArray.getPacageType(lastPacketIndex);
-        if (source.getConnectedStatus() == MySQLBackendConnection.IDLE_STATUS && (type == MySQLPacket.EOF_PACKET
-                || type == MySQLPacket.ERROR_PACKET || type == MySQLPacket.OK_PACKET)) {
+        if (source.getConnectedStatus() == MySQLBackendConnection.IDLE_STATUS && (type == MySQLPacket.EOF_PACKET || type == MySQLPacket.ERROR_PACKET || type == MySQLPacket.OK_PACKET)) {
             source.getResponseHandler().finishResponse(source);
         }
     }
 
-    private void processHandShakePacket(MySQLBackendConnection source, final ByteBufferArray bufferArray,
-            final int packetIndex) {
+    private void processHandShakePacket(MySQLBackendConnection source, final ByteBufferArray bufferArray, final int packetIndex) {
         // 设置握手数据包
         HandshakePacket packet = new HandshakePacket();
         packet.read(bufferArray, packetIndex);

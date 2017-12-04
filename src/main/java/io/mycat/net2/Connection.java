@@ -14,6 +14,7 @@ import org.slf4j.LoggerFactory;
  * @author wuzh
  */
 public abstract class Connection implements ClosableConnection {
+
     public static Logger LOGGER = LoggerFactory.getLogger(Connection.class);
     protected String host;
     protected int port;
@@ -161,7 +162,6 @@ public abstract class Connection implements ClosableConnection {
 
     public void setHandler(NIOHandler<? extends Connection> handler) {
         this.handler = handler;
-
     }
 
     @SuppressWarnings("rawtypes")
@@ -179,44 +179,15 @@ public abstract class Connection implements ClosableConnection {
     }
 
     private ByteBuffer compactReadBuffer(ByteBuffer buffer, int offset) {
-        if (buffer == null)
+        if (buffer == null) {
             return null;
+        }
         buffer.limit(buffer.position());
         buffer.position(offset);
         buffer = buffer.compact();
         readBufferOffset = 0;
         return buffer;
     }
-
-    // public void write(byte[] src) {
-    // try {
-    // writeQueueLock.lock();
-    // ByteBuffer buffer = this.allocate();
-    // int offset = 0;
-    // int remains = src.length;
-    // while (remains > 0) {
-    // int writeable = buffer.remaining();
-    // if (writeable >= remains) {
-    // // can write whole srce
-    // buffer.put(src, offset, remains);
-    // this.writeQueue.offer(buffer);
-    // break;
-    // } else {
-    // // can write partly
-    // buffer.put(src, offset, writeable);
-    // offset += writeable;
-    // remains -= writeable;
-    // writeQueue.offer(buffer);
-    // buffer = allocate();
-    // continue;
-    // }
-    //
-    // }
-    // } finally {
-    // writeQueueLock.unlock();
-    // }
-    // this.enableWrite(true);
-    // }
 
     @SuppressWarnings("unchecked")
     public void close(String reason) {
@@ -232,22 +203,6 @@ public abstract class Connection implements ClosableConnection {
         }
     }
 
-    /**
-     * asyn close (executed later in thread) 该函数使用多线程异步关闭
-     * Connection，会存在并发安全问题，暂时注释
-     * 
-     * @param reason
-     */
-    // public void asynClose(final String reason) {
-    // Runnable runn = new Runnable() {
-    // public void run() {
-    // Connection.this.close(reason);
-    // }
-    // };
-    // NetSystem.getInstance().getTimer().schedule(runn, 1, TimeUnit.SECONDS);
-    //
-    // }
-
     public boolean isClosed() {
         return isClosed;
     }
@@ -262,14 +217,12 @@ public abstract class Connection implements ClosableConnection {
     /**
      * 清理资源
      */
-
     protected void cleanup() {
-
         // 清理资源占用
         this.readBufferArray.recycle();
         this.writeQueue.recycle();
         if (writeBuffer != null) {
-            // recycle(writeBuffer);
+            //recycle(writeBuffer);
             this.writeBuffer = null;
         }
     }
@@ -297,43 +250,21 @@ public abstract class Connection implements ClosableConnection {
                 if ((processKey.isValid() && (processKey.interestOps() & SelectionKey.OP_WRITE) != 0)) {
                     disableWrite();
                 }
-
             } else {
 
                 if ((processKey.isValid() && (processKey.interestOps() & SelectionKey.OP_WRITE) == 0)) {
                     enableWrite(false);
                 }
             }
-
         } catch (IOException e) {
             if (LOGGER.isDebugEnabled()) {
                 LOGGER.debug("caught err:", e);
             }
             close("err:" + e);
         }
-
     }
 
     public void write(ByteBufferArray bufferArray) {
-        // try {
-        // writeQueueLock.lock();
-        // List<ByteBuffer> blockes = bufferArray.getWritedBlockLst();
-        // if (!bufferArray.getWritedBlockLst().isEmpty()) {
-        // for (ByteBuffer curBuf : blockes) {
-        // writeQueue.offer(curBuf);
-        // }
-        // }
-        // ByteBuffer curBuf = bufferArray.getCurWritingBlock();
-        // if (curBuf.position() == 0) {// empty
-        // this.recycle(curBuf);
-        // } else {
-        // writeQueue.offer(curBuf);
-        // }
-        // } finally {
-        // writeQueueLock.unlock();
-        // bufferArray.clear();
-        // }
-        // this.enableWrite(true);
         writeQueueLock.lock();
         try {
             writeQueue.add(bufferArray);
@@ -351,8 +282,7 @@ public abstract class Connection implements ClosableConnection {
     }
 
     private boolean write0() throws IOException {
-
-        for (;;) {
+        for (; ; ) {
             int written = 0;
             ByteBufferArray arry = writeQueue.pull();
             if (arry == null) {
@@ -360,7 +290,6 @@ public abstract class Connection implements ClosableConnection {
             }
             for (ByteBuffer buffer : arry.getWritedBlockLst()) {
                 buffer.flip();
-
                 // ByteBuffer buffer = writeBuffer;
                 if (buffer != null) {
                     while (buffer.hasRemaining()) {
@@ -373,7 +302,7 @@ public abstract class Connection implements ClosableConnection {
                             break;
                         }
                     }
-                   
+
                 }
             }
             if (arry.getLastByteBuffer().hasRemaining()) {
@@ -384,30 +313,6 @@ public abstract class Connection implements ClosableConnection {
                 arry.recycle();
             }
         }
-        // while ((buffer = writeQueue.poll()) != null) {
-        // if (buffer.limit() == 0) {
-        // recycle(buffer);
-        // close("quit send");
-        // return true;
-        // }
-        // buffer.flip();
-        // while (buffer.hasRemaining()) {
-        // written = channel.write(buffer);
-        // if (written > 0) {
-        // netOutBytes += written;
-        // NetSystem.getInstance().addNetOutBytes(written);
-        // lastWriteTime = TimeUtil.currentTimeMillis();
-        // } else {
-        // break;
-        // }
-        // }
-        // if (buffer.hasRemaining()) {
-        // writeBuffer = buffer;
-        // return false;
-        // } else {
-        // recycle(buffer);
-        // }
-        // }
         return true;
     }
 
@@ -429,7 +334,6 @@ public abstract class Connection implements ClosableConnection {
             needWakeup = true;
         } catch (Exception e) {
             LOGGER.warn("can't enable write " + e);
-
         }
         if (needWakeup && wakeup) {
             processKey.selector().wakeup();
@@ -437,13 +341,11 @@ public abstract class Connection implements ClosableConnection {
     }
 
     public void disableRead() {
-
         SelectionKey key = this.processKey;
         key.interestOps(key.interestOps() & OP_NOT_READ);
     }
 
     public void enableRead() {
-
         boolean needWakeup = false;
         try {
             SelectionKey key = this.processKey;
@@ -463,45 +365,42 @@ public abstract class Connection implements ClosableConnection {
 
     /**
      * 异步读取数据,only nio thread call
-     * 
+     *
      * @throws IOException
      */
     protected void asynRead() throws IOException {
         if (this.isClosed) {
             return;
         }
-
         boolean readAgain = true;
         int got = 0;
         while (readAgain) {
             ByteBuffer readBuffer = readBufferArray.getLastByteBuffer();
             got = channel.read(readBuffer);
             switch (got) {
-            case 0: {
-                // 如果空间不够了，继续分配空间读取
-                if (readBuffer.remaining() == 0) {
-                    readBufferArray.addNewBuffer();
-                } else {
-                    readAgain = false;
+                case 0: {
+                    // 如果空间不够了，继续分配空间读取
+                    if (readBuffer.remaining() == 0) {
+                        readBufferArray.addNewBuffer();
+                    } else {
+                        readAgain = false;
+                    }
+                    break;
                 }
-                break;
-            }
-            case -1: {
-                readAgain = false;
-                break;
-            }
-            default: {// readed some bytes
-
-                if (readBuffer.hasRemaining()) {
-                    // 没有可读的机会，等待下次读取
+                case -1: {
                     readAgain = false;
+                    break;
                 }
-
-                // 子类负责解析报文
-                readBufferOffset = parseProtocolPakage(this.readBufferArray, readBuffer, readBufferOffset);
-                // 解析后处理
-                handler.handle(this, this.readBufferArray);
-            }
+                default: {// readed some bytes
+                    if (readBuffer.hasRemaining()) {
+                        // 没有可读的机会，等待下次读取
+                        readAgain = false;
+                    }
+                    // 子类负责解析报文
+                    readBufferOffset = parseProtocolPakage(this.readBufferArray, readBuffer, readBufferOffset);
+                    // 解析后处理
+                    handler.handle(this, this.readBufferArray);
+                }
             }
         }
         if (got == -1) {
@@ -511,28 +410,24 @@ public abstract class Connection implements ClosableConnection {
             // pkgTotalCount+=readBufferArray
             // pkgTotalSize += length;
             // todo 把完整解析的数据报文拿出来供处理
-
         }
-
     }
 
-    protected abstract int parseProtocolPakage(ByteBufferArray readBufferArray, ByteBuffer readBuffer,
-            int readBufferOffset);
+    protected abstract int parseProtocolPakage(ByteBufferArray readBufferArray, ByteBuffer readBuffer, int readBufferOffset);
 
     private void closeSocket() {
-
         if (channel != null) {
             boolean isSocketClosed = true;
             try {
                 processKey.cancel();
                 channel.close();
             } catch (Throwable e) {
+                e.printStackTrace();
             }
             boolean closed = isSocketClosed && (!channel.isOpen());
             if (!closed) {
                 LOGGER.warn("close socket of connnection failed " + this);
             }
-
         }
     }
 

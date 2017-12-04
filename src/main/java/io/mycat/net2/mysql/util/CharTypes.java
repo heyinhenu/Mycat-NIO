@@ -22,12 +22,15 @@
  *
  */
 package io.mycat.net2.mysql.util;
+
 /**
  * @author mycat
  * @author mycat
  */
 public class CharTypes {
+    
     private final static boolean[] hexFlags = new boolean[256];
+
     static {
         for (char c = 0; c < hexFlags.length; ++c) {
             if (c >= 'A' && c <= 'F') {
@@ -49,6 +52,7 @@ public class CharTypes {
     }
 
     private final static boolean[] identifierFlags = new boolean[256];
+
     static {
         for (char c = 0; c < identifierFlags.length; ++c) {
             if (c >= 'A' && c <= 'Z') {
@@ -69,6 +73,7 @@ public class CharTypes {
     }
 
     private final static boolean[] whitespaceFlags = new boolean[256];
+
     static {
         whitespaceFlags[' '] = true;
         whitespaceFlags['\n'] = true;
